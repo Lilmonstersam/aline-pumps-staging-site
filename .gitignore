@@ -1,0 +1,10 @@
+.DS_Store
+._*
+__pycache__/
+*.py[cod]
+.venv/
+_site/
+
+# Saved copy of the old homepage, kept locally for reference only.
+/Water Pump System Supplier Sydney _ Aline Pumps Australia.html
+/Water Pump System Supplier Sydney _ Aline Pumps Australia_files/
