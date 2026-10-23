@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.parse import urlparse, quote
 
 from lxml import html as lhtml
+from article_copy import FULL_REWRITES, LEADS
 from article_topics import ARTICLE_TAGS, TOPICS
 
 
@@ -243,6 +244,109 @@ def clean_markup(raw: str, current: str):
     return (html.escape(root.text or "") + "".join(render(child) + html.escape(child.tail or "") for child in root)).strip()
 
 
+def clean_article_source(raw: str) -> str:
+    """Remove WordPress editor scaffolding while retaining article HTML."""
+    raw = raw.replace('\xa0', ' ').replace('&nbsp;', ' ')
+    raw = re.sub(r'<!--\s*/?wp:[\s\S]*?-->', '', raw)
+    raw = re.sub(r'\[harland_mackenzie_author_card\]', '', raw, flags=re.I)
+    raw = re.sub(
+        r'\[video[^\]]*\bm4v="([^"]+)"[^\]]*\]\s*\[/video\]',
+        lambda match: f'<p><a href="{html.escape(match.group(1), quote=True)}">Watch the XRipper demonstration video</a></p>',
+        raw,
+        flags=re.I,
+    )
+    raw = re.sub(r'<p>\s*Published by:\s*</p>\s*<p>\s*on\s*</p>', '', raw, flags=re.I)
+    return raw
+
+
+def format_article_html(markup: str) -> str:
+    """Give classic-editor text real paragraphs and discard empty blocks."""
+    root = lhtml.fragment_fromstring(markup or '<div></div>', create_parent='div')
+    blocks = {'p', 'h2', 'h3', 'h4', 'ul', 'ol', 'blockquote', 'table', 'figure', 'img'}
+    output = []
+
+    def add_text(fragment: str):
+        for part in re.split(r'(?:\r?\n[ \t]*){2,}', fragment):
+            part = part.strip()
+            if not part:
+                continue
+            readable = lhtml.fragment_fromstring(part, create_parent='div').text_content().strip()
+            if readable or '<img' in part:
+                output.append(f'<p>{part}</p>')
+
+    pending = html.escape(root.text or '')
+    for child in root:
+        tag = child.tag.lower() if isinstance(child.tag, str) else ''
+        if tag in blocks:
+            add_text(pending)
+            pending = ''
+            readable = child.text_content().strip()
+            if readable or child.xpath('.//img') or tag == 'img':
+                output.append(lhtml.tostring(child, encoding='unicode', method='html', with_tail=False))
+        else:
+            pending += lhtml.tostring(child, encoding='unicode', method='html', with_tail=False)
+        pending += html.escape(child.tail or '')
+    add_text(pending)
+    result = ''.join(output)
+    result = re.sub(r'<p>\s*(<figure>.*?</figure>)\s*</p>', r'\1', result, flags=re.S)
+    result = re.sub(r'<p>\s*Published by:\s*</p>\s*<p>\s*on\s*</p>', '', result, flags=re.I)
+    return result
+
+
+_article_markup_cache = {}
+
+
+def article_markup(post) -> str:
+    slug = post[11]
+    if slug in _article_markup_cache:
+        return _article_markup_cache[slug]
+    if slug in FULL_REWRITES:
+        markup = FULL_REWRITES[slug]
+    else:
+        markup = format_article_html(clean_markup(clean_article_source(post[4]), article_path[slug]))
+    tree = lhtml.fragment_fromstring(markup, create_parent='div')
+    if slug in LEADS:
+        lead = next((node for node in tree.xpath('./p') if len(node.text_content().strip()) >= 35), None)
+        if lead is None:
+            raise ValueError(f'Missing editable article lead: {slug}')
+        tree.replace(lead, lhtml.fragment_fromstring(LEADS[slug]))
+        if slug == 'high-flow-or-high-pressure-what-is-the-difference':
+            heading = next((node for node in tree.xpath('./p') if node.text_content().strip().lower() == "high-flow and high-pressure, what's the difference?"), None)
+            if heading is not None:
+                tree.remove(heading)
+    spellings = {
+        'analyzed': 'analysed', 'analyze': 'analyse', 'analyzing': 'analysing',
+        'specialized': 'specialised', 'customization': 'customisation',
+        'minimizing': 'minimising', 'gray water': 'greywater',
+    }
+    def polish_text(value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.replace('\xa0', ' ').replace('—', ' – ')
+        for original, replacement in spellings.items():
+            value = re.sub(r'\b' + re.escape(original) + r'\b', replacement, value, flags=re.I)
+        value = re.sub(r'[ \t]{2,}', ' ', value)
+        value = re.sub(r' +([,.;!?])', r'\1', value)
+        return value
+    for node in tree.iter():
+        node.text = polish_text(node.text)
+        node.tail = polish_text(node.tail)
+    result = html.escape(tree.text or '') + ''.join(lhtml.tostring(child, encoding='unicode', method='html', with_tail=True) for child in tree)
+    _article_markup_cache[slug] = result
+    return result
+
+
+def article_intro(post) -> str:
+    source = article_markup(post)
+    try:
+        tree = lhtml.fragment_fromstring(source, create_parent="div")
+        paragraphs = [re.sub(r'\s+', ' ', node.text_content()).strip() for node in tree.xpath('.//p[not(ancestor::li or ancestor::blockquote)]')]
+        intro = next((text for text in paragraphs if len(text) >= 65), plain(source))
+    except (ValueError, lhtml.ParserError):
+        intro = plain(source)
+    return intro
+
+
 def plain(raw: str):
     if not raw:
         return ""
@@ -253,7 +357,7 @@ def plain(raw: str):
 
 
 def excerpt(post, limit=210):
-    copy = plain(post[6] or post[4])
+    copy = article_intro(post) if post[20] == "post" else plain(post[6] or post[4])
     return copy if len(copy) <= limit else copy[:limit].rsplit(" ", 1)[0] + "…"
 
 
@@ -527,7 +631,7 @@ def build_story(post, kind):
     parent = "/our-projects/" if project else "/blog/"
     image = featured(post)
     visual = f'<img src="{e(media_url(image,current))}" alt="{e(title(post))}" loading="lazy">' if image else ""
-    content = re.sub(r'[ \t]+(?=\n)', '', clean_markup(post[4], current))
+    content = re.sub(r'[ \t]+(?=\n)', '', clean_markup(post[4], current)) if project else article_markup(post)
     date = str(post[2])[:10]
     kicker = "Project" if project else "News & Insights"
     hero = f'''<section class="page-banner archive-banner{' project-story-banner' if project else ' article-story-banner'}"><div class="wrap"><span class="eyebrow">{e(kicker)}{": " + e(category[0].replace("-", " ").title()) if project and category else ""}</span><h1>{e(title(post))}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link(parent,current))}">{"Projects" if project else "News & Insights"}</a> &nbsp;/&nbsp; {e(title(post))}</p></div></section>'''
