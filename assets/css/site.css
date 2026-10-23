@@ -719,6 +719,11 @@ h3{font-size:22px}
 .has-submenu{position:relative}
 .menu-parent{display:flex;align-items:center;gap:3px}
 .submenu-toggle{display:grid;place-items:center;width:25px;height:28px;padding:0;border:0;background:transparent;color:#fff;cursor:pointer}
+@media (min-width:1151px){
+  .menu{align-items:center}
+  .menu>li,.menu-parent{display:flex;align-items:center;height:44px}
+  .menu>li>a,.menu-parent>a{display:inline-flex;align-items:center;height:44px;line-height:1.2;padding:0;border-bottom:2px solid transparent}
+}
 .submenu-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
 .submenu-toggle:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
 .submenu{display:none;position:absolute;top:calc(100% + 17px);left:-16px;min-width:240px;padding:9px 16px;list-style:none;background:var(--navy-deep);box-shadow:0 16px 32px rgba(0,0,0,.25);z-index:30}
