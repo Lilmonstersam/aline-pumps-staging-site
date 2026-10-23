@@ -26,6 +26,49 @@
     });
   }
 
+  const headerSearch = document.querySelector('.header-search');
+  if (headerSearch) {
+    const searchToggle = headerSearch.querySelector('.header-search-toggle');
+    const searchInput = headerSearch.querySelector('input[type="search"]');
+    const searchSubmit = headerSearch.querySelector('.header-search-submit');
+    const hoverSearch = window.matchMedia('(hover: hover) and (min-width: 701px)');
+    function setSearch(open) {
+      headerSearch.classList.toggle('is-open', open);
+      searchToggle.setAttribute('aria-expanded', String(open));
+      searchToggle.setAttribute('aria-label', open ? 'Close site search' : 'Open site search');
+      searchInput.tabIndex = open ? 0 : -1;
+      searchSubmit.tabIndex = open ? 0 : -1;
+    }
+    searchToggle.addEventListener('click', () => {
+      const open = hoverSearch.matches || !headerSearch.classList.contains('is-open');
+      if (open && toggle && toggle.getAttribute('aria-expanded') === 'true') toggle.click();
+      setSearch(open);
+      if (open) searchInput.focus();
+    });
+    headerSearch.addEventListener('mouseenter', () => {
+      if (hoverSearch.matches) setSearch(true);
+    });
+    headerSearch.addEventListener('mouseleave', () => {
+      if (hoverSearch.matches && !headerSearch.contains(document.activeElement)) setSearch(false);
+    });
+    headerSearch.addEventListener('focusin', event => {
+      if (event.target !== searchToggle) setSearch(true);
+    });
+    headerSearch.addEventListener('focusout', event => {
+      if (!headerSearch.contains(event.relatedTarget)) setSearch(false);
+    });
+    headerSearch.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        setSearch(false);
+        searchToggle.focus();
+      }
+    });
+    document.addEventListener('pointerdown', event => {
+      if (!headerSearch.contains(event.target)) setSearch(false);
+    });
+    if (toggle) toggle.addEventListener('click', () => setSearch(false));
+  }
+
   const filterGroup = document.querySelector('.archive-filters');
   if (filterGroup) {
     const cards = [...document.querySelectorAll('.filter-item')];

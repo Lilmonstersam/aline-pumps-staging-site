@@ -95,8 +95,6 @@ for filename in PAGES:
         text = text.replace('href="/contact-us/">Work with us', 'href="/contact-us/?topic=Project%20enquiry">Discuss a project')
         text = text.replace('href="our-projects/index.html" style="background-image:url(\'assets/img/project-wellcamp-airport.jpg\')"', 'href="portfolio/wellcamp-airport/index.html" style="background-image:url(\'assets/img/project-wellcamp-airport.jpg\')"')
     if filename == "support-and-service.html":
-        text = text.replace('href="aline-service.html">Learn more', 'href="aline-service.html">Request servicing')
-        text = text.replace('href="training.html">Learn more', 'href="training.html">Book training')
         text = text.replace('href="https://alinespares.com/" target="_blank" rel="noopener noreferrer">Shop now', 'href="https://alinespares.com/" target="_blank" rel="noopener noreferrer" aria-label="Shop spares on the external Aline Spares website">Shop spares <span class="external-arrow" aria-hidden="true">↗</span>')
         text = text.replace('href="https://pumps2you.com/" target="_blank" rel="noopener noreferrer">Shop now', 'href="https://pumps2you.com/" target="_blank" rel="noopener noreferrer" aria-label="Shop domestic pumps on the external Pumps 2 You website">Shop domestic pumps <span class="external-arrow" aria-hidden="true">↗</span>')
         text = text.replace('href="/contact-us/">Contact us <span aria-hidden="true">&rarr;</span>', 'href="/contact-us/?topic=Support%20enquiry">Ask for support <span aria-hidden="true">&rarr;</span>')
