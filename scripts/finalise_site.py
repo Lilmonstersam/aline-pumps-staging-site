@@ -31,7 +31,7 @@ def active_section(path: Path) -> str:
     if relative in {"about.html", "about/index.html"}:
         return "about"
     other_pages = {"contact-us/index.html", "search/index.html", "terms-and-conditions/index.html", "return-of-goods-policy/index.html", "privacy-policy/index.html", "metal-water-tanks/index.html", "plumbing-supplies/index.html"}
-    if relative.startswith(("blog/", "category/")) or (len(path.relative_to(SITE).parts) == 2 and relative not in other_pages):
+    if relative.startswith(("blog/", "category/", "topics/")) or (len(path.relative_to(SITE).parts) == 2 and relative not in other_pages):
         return "news"
     return ""
 
@@ -121,6 +121,8 @@ def search_records() -> list[dict[str, str]]:
             kind = "Product" if len(path.relative_to(SITE).parts) == 4 else "Product range"
         elif relative.startswith("portfolio/"):
             kind = "Project"
+        elif relative.startswith("topics/"):
+            kind = "Topic"
         elif relative.startswith("category/") or (len(path.relative_to(SITE).parts) == 2 and relative not in {"about/index.html", "products/index.html", "support-and-service/index.html", "our-projects/index.html", "blog/index.html", "contact-us/index.html"}):
             kind = "Article"
         else:

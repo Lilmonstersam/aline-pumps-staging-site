@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.parse import urlparse, quote
 
 from lxml import html as lhtml
+from article_topics import ARTICLE_TAGS, TOPICS
 
 
 SITE = Path(__file__).resolve().parents[1]
@@ -91,6 +92,11 @@ category_ids = {row[2]: int(row[0]) for row in category_terms.values()}
 product_posts = sorted((p for p in posts.values() if p[20] == "product" and p[7] == "publish" and p[11] != "round"), key=lambda p: int(p[0]))
 project_posts = sorted((p for p in posts.values() if p[20] == "portfolio" and p[7] == "publish"), key=lambda p: p[5].lower())
 article_posts = sorted((p for p in posts.values() if p[20] == "post" and p[7] == "publish"), key=lambda p: p[2], reverse=True)
+article_slugs = {p[11] for p in article_posts}
+if article_slugs != ARTICLE_TAGS.keys():
+    raise ValueError(f"Article topic assignments differ from the backup: missing={article_slugs - ARTICLE_TAGS.keys()}, extra={ARTICLE_TAGS.keys() - article_slugs}")
+if any(not tags or len(tags) > 3 or len(tags) != len(set(tags)) or any(tag not in TOPICS for tag in tags) for tags in ARTICLE_TAGS.values()):
+    raise ValueError("Each article needs one to three distinct, valid topics")
 product_category = {int(p[0]): relations[int(p[0])]["product_cat"][0] for p in product_posts}
 product_path = {p[11]: f"products/{product_category[int(p[0])]}/{p[11]}/index.html" for p in product_posts}
 category_path = {slug: f"products/{slug}/index.html" for slug in category_terms}
@@ -125,6 +131,8 @@ for slug in extra_pages:
     known_paths[f"/{slug}/"] = f"{slug}/index.html"
 for slug in blog_category_slugs:
     known_paths[f"/category/{slug}/"] = f"category/{slug}/index.html"
+for slug in TOPICS:
+    known_paths[f"/topics/{slug}/"] = f"topics/{slug}/index.html"
 for page in range(2, 6):
     known_paths[f"/blog/page/{page}/"] = f"blog/page/{page}/index.html"
 for slug in ("aline-news", "aline-pumps"):
@@ -491,13 +499,10 @@ def build_archive(kind):
     write(current, document(current, f"{heading} | Aline Pumps", f"Explore Aline Pumps {heading.lower()}.", active, body, url))
 
 
-def article_topics(current, post, limit=2):
-    slugs = [slug for slug in relations[int(post[0])]["category"] if slug in blog_category_slugs]
-    slugs.sort(key=lambda slug: slug in {"aline-news", "aline-pumps"})
-    links = "".join(f'<a href="{e(local_link("/category/" + slug + "/", current))}" rel="tag">{e(blog_category_names.get(slug, slug.replace("-", " ").title()))}</a>' for slug in slugs[:limit])
-    if not links:
-        links = '<span>Pump guides</span>'
-    return f'<div class="article-topic-tags" aria-label="Article topics">{links}</div>' if links else ""
+def article_topics(current, post, limit=3):
+    slugs = ARTICLE_TAGS[post[11]][:limit]
+    links = "".join(f'<a href="{e(local_link("/topics/" + slug + "/", current))}" rel="tag">{e(TOPICS[slug][0])}</a>' for slug in slugs)
+    return f'<div class="article-topic-tags" aria-label="Article topics">{links}</div>'
 
 
 def build_blog_archive():
@@ -508,10 +513,9 @@ def build_blog_archive():
     lead_image = featured(lead)
     lead_media = f'<a class="blog-featured-media" href="{e(lead_link)}"><img src="{e(media_url(lead_image, current))}" alt="" fetchpriority="high"></a>' if lead_image else ""
     recent_items = "".join(f'''<article class="blog-recent-item">{article_topics(current, post, 1)}<h3><a href="{e(local_link("/" + post[11] + "/", current))}">{e(title(post))}</a></h3></article>''' for post in recent)
-    categories = sorted({slug for post in article_posts for slug in relations[int(post[0])]["category"] if slug in blog_category_slugs})
-    buttons = '<button type="button" class="is-active" data-filter="all" aria-pressed="true">All</button>' + "".join(f'<button type="button" data-filter="{e(slug)}" aria-pressed="false">{e(blog_category_names.get(slug, slug.replace("-", " ").title()))}</button>' for slug in categories)
-    cards = "".join(f'''<div class="filter-item" data-categories="{e(" ".join(relations[int(post[0])]["category"]))}">{card(current, "/" + post[11] + "/", featured(post), title(post), excerpt(post, 150), "Read article", article_topics(current, post))}</div>''' for post in article_posts)
-    body = f'''<section class="blog-hero"><div class="wrap"><div class="blog-hero-intro"><span class="eyebrow">Technical articles and news</span><h1>News &amp; Insights</h1><p class="crumbs"><a href="{e(local_link('/', current))}">Home</a> &nbsp;/&nbsp; News &amp; Insights</p></div><div class="blog-hero-grid"><article class="blog-featured">{lead_media}<div class="blog-featured-content"><span class="blog-section-label">Featured article</span>{article_topics(current, lead)}<h2><a href="{e(lead_link)}">{e(title(lead))}</a></h2><p>{e(excerpt(lead, 230))}</p><a class="link-arrow" href="{e(lead_link)}">Read article</a></div></article><aside class="blog-recent" aria-labelledby="blog-recent-heading"><span class="blog-section-label">Stay up to date</span><h2 id="blog-recent-heading">Most recent articles</h2><div class="blog-recent-list">{recent_items}</div></aside></div></div></section><section class="section archive-index blog-archive"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Browse articles</span><h2>Ideas, guidance and company news</h2></div></div><div class="archive-filters" role="group" aria-label="Filter articles by topic">{buttons}</div><div class="archive-grid archive-filter-grid">{cards}</div><p class="filter-empty" hidden>No articles in this topic.</p></div></section>''' + cta(current, "Technical advice", "Talk to our team")
+    buttons = '<button type="button" class="is-active" data-filter="all" aria-pressed="true">All</button>' + "".join(f'<button type="button" data-filter="{e(slug)}" aria-pressed="false">{e(label)}</button>' for slug, (label, _) in TOPICS.items())
+    cards = "".join(f'''<div class="filter-item" data-categories="{e(" ".join(ARTICLE_TAGS[post[11]]))}">{card(current, "/" + post[11] + "/", featured(post), title(post), excerpt(post, 150), "Read article", article_topics(current, post))}</div>''' for post in article_posts)
+    body = f'''<section class="blog-hero"><div class="wrap"><div class="blog-hero-intro"><span class="eyebrow">Technical articles and news</span><h1>News &amp; Insights</h1><p class="crumbs"><a href="{e(local_link('/', current))}">Home</a> &nbsp;/&nbsp; News &amp; Insights</p></div><div class="blog-hero-grid"><article class="blog-featured">{lead_media}<div class="blog-featured-content"><span class="blog-section-label">Featured article</span>{article_topics(current, lead)}<h2><a href="{e(lead_link)}">{e(title(lead))}</a></h2><p>{e(excerpt(lead, 230))}</p><a class="link-arrow" href="{e(lead_link)}">Read article</a></div></article><aside class="blog-recent" aria-labelledby="blog-recent-heading"><span class="blog-section-label">Stay up to date</span><h2 id="blog-recent-heading">Most recent articles</h2><div class="blog-recent-list">{recent_items}</div></aside></div></div></section><section class="section archive-index blog-archive article-index"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Browse articles</span><h2>Ideas, guidance and company news</h2></div></div><div class="archive-filters" role="group" aria-label="Filter articles by topic">{buttons}</div><div class="archive-grid archive-filter-grid">{cards}</div><p class="filter-empty" hidden>No articles in this topic.</p></div></section>''' + cta(current, "Technical advice", "Talk to our team")
     write(current, document(current, "News & Insights | Aline Pumps", "Technical articles, guidance and company news from Aline Pumps.", "blog", body, "/blog/"))
 
 
@@ -523,15 +527,17 @@ def build_story(post, kind):
     parent = "/our-projects/" if project else "/blog/"
     image = featured(post)
     visual = f'<img src="{e(media_url(image,current))}" alt="{e(title(post))}" loading="lazy">' if image else ""
-    content = clean_markup(post[4], current)
+    content = re.sub(r'[ \t]+(?=\n)', '', clean_markup(post[4], current))
     date = str(post[2])[:10]
     kicker = "Project" if project else "News & Insights"
-    hero = f'''<section class="page-banner archive-banner{' project-story-banner' if project else ''}"><div class="wrap"><span class="eyebrow">{e(kicker)}{": " + e(category[0].replace("-", " ").title()) if category else ""}</span><h1>{e(title(post))}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link(parent,current))}">{"Projects" if project else "News & Insights"}</a> &nbsp;/&nbsp; {e(title(post))}</p></div></section>'''
+    hero = f'''<section class="page-banner archive-banner{' project-story-banner' if project else ' article-story-banner'}"><div class="wrap"><span class="eyebrow">{e(kicker)}{": " + e(category[0].replace("-", " ").title()) if project and category else ""}</span><h1>{e(title(post))}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link(parent,current))}">{"Projects" if project else "News & Insights"}</a> &nbsp;/&nbsp; {e(title(post))}</p></div></section>'''
     more = [p for p in collection if p[0] != post[0]][:3]
     dest = (lambda p: "/portfolio/"+p[11]+"/") if project else (lambda p: "/"+p[11]+"/")
-    cards = "".join(card(current, dest(p), featured(p), title(p), excerpt(p,120), "View project" if project else "Read article") for p in more)
+    cards = "".join(card(current, dest(p), featured(p), title(p), excerpt(p,120), "View project" if project else "Read article", "" if project else article_topics(current, p)) for p in more)
     bluebook = '''<section class="section archive-bluebook"><div class="wrap archive-reading"><span class="eyebrow">Aline Blue Book</span><h2>Request access to the product guide</h2><p>The guide download is available through Aline Pumps' access form.</p><a class="btn btn-primary" href="https://info.alinepumps.com.au/blue-book-form-page" target="_blank" rel="noopener">Open the Blue Book access form <span aria-hidden="true">↗</span></a></div></section>''' if post[11] == "2023-blue-book" else ""
-    body = hero + f'''<article class="section archive-story"><div class="wrap archive-reading"><p class="archive-story-meta">{e(category[0].replace("-"," ").title()) if category else e(kicker)}{" · " + date if not project else ""}</p>{f'<figure class="archive-story-image">{visual}</figure>' if visual else ''}<div class="archive-rich">{content}</div><a class="link-arrow" href="{e(local_link(parent,current))}">Back to {"projects" if project else "news and insights"}</a></div></article>''' + bluebook + f'''<section class="section archive-related"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Keep exploring</span><h2>{"More projects" if project else "More articles"}</h2></div></div><div class="archive-grid">{cards}</div></div></section>''' + cta(current, "Project enquiry" if project else "Technical advice", "Talk to our team")
+    story_meta = e(category[0].replace("-", " ").title()) if project and category else e(kicker) + " · " + date
+    story_tags = "" if project else article_topics(current, post)
+    body = hero + f'''<article class="section archive-story{' article-story' if not project else ''}"><div class="wrap archive-reading"><p class="archive-story-meta">{story_meta}</p>{story_tags}{f'<figure class="archive-story-image">{visual}</figure>' if visual else ''}<div class="archive-rich">{content}</div><a class="link-arrow" href="{e(local_link(parent,current))}">Back to {"projects" if project else "news and insights"}</a></div></article>''' + bluebook + f'''<section class="section archive-related"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Keep exploring</span><h2>{"More projects" if project else "More articles"}</h2></div></div><div class="archive-grid">{cards}</div></div></section>''' + cta(current, "Project enquiry" if project else "Technical advice", "Talk to our team")
     seo = postmeta[int(post[0])].get("_yoast_wpseo_title") or f"{title(post)} | Aline Pumps"
     description = postmeta[int(post[0])].get("_yoast_wpseo_metadesc") or excerpt(post)
     canonical = f"/portfolio/{post[11]}/" if project else f"/{post[11]}/"
@@ -551,7 +557,7 @@ def build_article_listing(slug: str | None, page: int = 1):
         heading = "News & Insights"
         records = article_posts
     visible = records[(page - 1) * 12 : page * 12]
-    cards = "".join(card(current, "/" + p[11] + "/", featured(p), title(p), excerpt(p, 145), "Read article") for p in visible)
+    cards = "".join(card(current, "/" + p[11] + "/", featured(p), title(p), excerpt(p, 145), "Read article", article_topics(current, p)) for p in visible)
     nav = []
     for number in range(1, max(2, (len(records) + 11) // 12 + 1)):
         if slug:
@@ -561,9 +567,18 @@ def build_article_listing(slug: str | None, page: int = 1):
         if path not in known_paths:
             continue
         nav.append(f'<a {"aria-current=\"page\"" if number == page else ""} href="{e(local_link(path,current))}">{number}</a>')
-    body = f'''<section class="page-banner archive-banner"><div class="wrap"><span class="eyebrow">News &amp; Insights</span><h1>{e(heading)}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link('/blog/',current))}">News &amp; Insights</a> &nbsp;/&nbsp; {e(heading)}</p></div></section><section class="section archive-index"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Browse articles</span><h2>{e(heading)}</h2></div><p>{len(records)} articles</p></div><div class="archive-grid">{cards}</div><nav class="archive-pagination" aria-label="Article pages">{"".join(nav)}</nav></div></section>'''
+    body = f'''<section class="page-banner archive-banner article-story-banner"><div class="wrap"><span class="eyebrow">News &amp; Insights</span><h1>{e(heading)}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link('/blog/',current))}">News &amp; Insights</a> &nbsp;/&nbsp; {e(heading)}</p></div></section><section class="section archive-index article-index"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Browse articles</span><h2>{e(heading)}</h2></div><p>{len(records)} articles</p></div><div class="archive-grid">{cards}</div><nav class="archive-pagination" aria-label="Article pages">{"".join(nav)}</nav></div></section>'''
     seo = inventory_title.get(canonical, f"{heading} | Aline Pumps")
     write(current, document(current, seo, f"Read Aline Pumps articles about {heading.lower()}.", "blog", body, canonical))
+
+
+def build_topic_archive(slug: str):
+    current = f"topics/{slug}/index.html"
+    label, description = TOPICS[slug]
+    records = [post for post in article_posts if slug in ARTICLE_TAGS[post[11]]]
+    cards = "".join(card(current, "/" + post[11] + "/", featured(post), title(post), excerpt(post, 145), "Read article", article_topics(current, post)) for post in records)
+    body = f'''<section class="page-banner archive-banner article-story-banner"><div class="wrap"><span class="eyebrow">News &amp; Insights topics</span><h1>{e(label)}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link('/blog/',current))}">News &amp; Insights</a> &nbsp;/&nbsp; {e(label)}</p></div></section><section class="section archive-index article-index"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Explore {e(label.lower())}</span><h2>{e(description)}</h2></div><p>{len(records)} article{'s' if len(records) != 1 else ''}</p></div><div class="archive-grid">{cards}</div></div></section>'''
+    write(current, document(current, f"{label} articles | Aline Pumps", description, "blog", body, f"/topics/{slug}/"))
 
 
 def build_authors():
@@ -619,6 +634,8 @@ for post in article_posts:
     build_story(post, "article")
 for slug in blog_category_slugs:
     build_article_listing(slug)
+for slug in TOPICS:
+    build_topic_archive(slug)
 for slug in ("aline-news", "aline-pumps"):
     build_article_listing(slug, 2)
 for page in range(2, 6):
