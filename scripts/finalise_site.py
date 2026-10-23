@@ -47,7 +47,10 @@ def header(path: Path) -> str:
     menu_items = []
     for label, key, target in links:
         attrs = ' class="active" aria-current="page"' if key == active else ""
-        menu_items.append(f'<li><a href="{root}{target}"{attrs}>{label}</a></li>')
+        if key == "support":
+            menu_items.append(f'''<li class="has-submenu"><div class="menu-parent"><a href="{root}{target}"{attrs}>{label}</a><button class="submenu-toggle" type="button" aria-controls="support-submenu" aria-expanded="false" aria-label="Show Support and Service options"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 7 6 6 6-6"/></svg></button></div><ul class="submenu" id="support-submenu"><li><a href="{root}aline-service.html">Request servicing</a></li><li><a href="https://alinespares.com/" target="_blank" rel="noopener">Shop spares <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="https://pumps2you.com/" target="_blank" rel="noopener">Shop domestic pumps <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="{root}training.html#how-to-book">Book training</a></li></ul></li>''')
+        else:
+            menu_items.append(f'<li><a href="{root}{target}"{attrs}>{label}</a></li>')
     menu = "".join(menu_items)
     return f'''<header class="site-header">
   <div class="topbar"><div class="wrap">
@@ -61,8 +64,7 @@ def header(path: Path) -> str:
   <nav class="navbar" aria-label="Main"><div class="wrap">
     <ul class="menu" id="primary-menu">{menu}</ul>
     <button class="menu-toggle" type="button" aria-controls="primary-menu" aria-expanded="false" aria-label="Open menu">Menu</button>
-    <div class="header-search"><button class="header-search-toggle" type="button" aria-controls="header-search-form" aria-expanded="false" aria-label="Open site search">{search_icon()}</button><form id="header-search-form" role="search" action="{root}search/index.html" method="get"><label class="sr-only" for="header-site-search">Search Aline Pumps</label><input id="header-site-search" type="search" name="q" placeholder="Search the site" autocomplete="off" required tabindex="-1"><button class="header-search-submit" type="submit" aria-label="Submit search" tabindex="-1">Go</button></form></div>
-    <div class="nav-actions"><a class="btn btn-outline portal-link" href="{PORTAL}" target="_blank" rel="noopener">Log in <span class="external-arrow" aria-hidden="true">↗</span></a><a class="btn btn-primary" href="{root}contact-us/index.html">Contact us</a></div>
+    <div class="nav-actions"><div class="header-search" data-root="{root}" data-index-src="{root}assets/js/search-index.js"><button class="header-search-toggle" type="button" aria-controls="header-search-form" aria-expanded="false" aria-label="Open site search">{search_icon()}</button><form id="header-search-form" role="search" action="{root}search/index.html" method="get"><label class="sr-only" for="header-site-search">Search Aline Pumps</label><input id="header-site-search" type="search" name="q" placeholder="Search the site" autocomplete="off" aria-controls="header-search-preview" aria-expanded="false" required tabindex="-1"><button class="header-search-submit" type="submit" aria-label="Submit search" tabindex="-1">Go</button></form><div class="header-search-preview" id="header-search-preview" aria-label="Search suggestions" hidden><p class="header-search-preview-status" role="status" aria-live="polite"></p><ul class="header-search-preview-list"></ul><a class="header-search-all" href="{root}search/index.html">View all results →</a></div></div><a class="btn btn-outline portal-link" href="{PORTAL}" target="_blank" rel="noopener">Log in <span class="external-arrow" aria-hidden="true">↗</span></a><a class="btn btn-primary" href="{root}contact-us/index.html">Contact us</a></div>
   </div></nav>
 </header>'''
 

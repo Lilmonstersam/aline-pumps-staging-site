@@ -526,7 +526,7 @@ def build_story(post, kind):
     content = clean_markup(post[4], current)
     date = str(post[2])[:10]
     kicker = "Project" if project else "News & Insights"
-    hero = f'''<section class="page-banner archive-banner"><div class="wrap"><span class="eyebrow">{e(kicker)}{": " + e(category[0].replace("-", " ").title()) if category else ""}</span><h1>{e(title(post))}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link(parent,current))}">{"Projects" if project else "News & Insights"}</a> &nbsp;/&nbsp; {e(title(post))}</p></div></section>'''
+    hero = f'''<section class="page-banner archive-banner{' project-story-banner' if project else ''}"><div class="wrap"><span class="eyebrow">{e(kicker)}{": " + e(category[0].replace("-", " ").title()) if category else ""}</span><h1>{e(title(post))}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link(parent,current))}">{"Projects" if project else "News & Insights"}</a> &nbsp;/&nbsp; {e(title(post))}</p></div></section>'''
     more = [p for p in collection if p[0] != post[0]][:3]
     dest = (lambda p: "/portfolio/"+p[11]+"/") if project else (lambda p: "/"+p[11]+"/")
     cards = "".join(card(current, dest(p), featured(p), title(p), excerpt(p,120), "View project" if project else "Read article") for p in more)

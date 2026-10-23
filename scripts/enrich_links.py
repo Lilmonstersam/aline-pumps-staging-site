@@ -89,7 +89,30 @@ def project_card(current: Path, item: dict, compact=False) -> str:
         visual = f'<img src="{html.escape(image, quote=True)}" alt="" loading="lazy">' if image else '<span class="project-mini-placeholder" aria-hidden="true">Aline Pumps</span>'
         return f'<a class="project-mini-card" href="{html.escape(url, quote=True)}">{visual}<span>{title}</span><small>View project →</small></a>'
     style = f' style="background-image:url(\'{html.escape(image, quote=True)}\')"' if image else ""
-    return f'<a class="work" href="{html.escape(url, quote=True)}"{style}><h3>{title}</h3><span>View project</span></a>'
+    labels = sorted(item["tags"], key=lambda slug: -item["scores"][slug])[:2]
+    badges = '<span class="project-work-tags">' + ''.join(f'<span>{html.escape(CATEGORIES[slug][0])}</span>' for slug in labels) + '</span>' if labels else ''
+    return f'<a class="work" href="{html.escape(url, quote=True)}"{style}>{badges}<h3>{title}</h3><span>View project</span></a>'
+
+
+def tag_project_tiles(projects: dict) -> None:
+    paths = [SITE / "our-projects/index.html", *sorted((SITE / "portfolio_categories").glob("*/index.html"))]
+    for path in paths:
+        if not path.is_file():
+            continue
+        raw = path.read_text()
+        raw = re.sub(r'<!-- project-tile-tags-start -->.*?<!-- project-tile-tags-end -->', '', raw, flags=re.S)
+
+        def add_badges(match):
+            slug = Path(match.group(1)).parent.name
+            item = projects.get(slug)
+            if not item or not item["tags"]:
+                return match.group(0)
+            labels = sorted(item["tags"], key=lambda category: -item["scores"][category])[:2]
+            badges = ''.join(f'<span class="project-tile-tag">{html.escape(CATEGORIES[category][0])}</span>' for category in labels)
+            return match.group(0).replace('</a>', f'<!-- project-tile-tags-start --><span class="project-tile-tags" aria-label="Related product categories">{badges}</span><!-- project-tile-tags-end --></a>', 1)
+
+        raw = re.sub(r'<a href="([^"]+/portfolio/[^/]+/index\.html)" class="archive-card-media">.*?</a>', add_badges, raw, flags=re.S)
+        path.write_text(raw)
 
 
 def tag_projects(projects: dict) -> None:
@@ -246,6 +269,7 @@ def link_hub_brands(brand_products: dict[str, list[Path]]) -> None:
 def enrich() -> None:
     projects, by_category = project_data()
     tag_projects(projects)
+    tag_project_tiles(projects)
     update_category_projects(by_category)
     brands = tag_products(by_category)
     build_brand_archives(brands)

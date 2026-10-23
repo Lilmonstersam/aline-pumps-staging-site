@@ -9,21 +9,7 @@
   document.querySelectorAll('input[name="q"]').forEach(field => { field.value = query; });
   if (!query) return;
 
-  const terms = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  const matches = (window.ALINE_SEARCH_INDEX || []).map(item => {
-    const title = item.title.toLocaleLowerCase();
-    const description = item.description.toLocaleLowerCase();
-    const body = item.text.toLocaleLowerCase();
-    if (!terms.every(term => title.includes(term) || description.includes(term) || body.includes(term))) return null;
-    let score = 0;
-    for (const term of terms) {
-      if (title.includes(term)) score += 12;
-      if (description.includes(term)) score += 4;
-      if (body.includes(term)) score += 1;
-    }
-    if (title.includes(query.toLocaleLowerCase())) score += 8;
-    return { item, score };
-  }).filter(Boolean).sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
+  const matches = window.alineSearchMatches(window.ALINE_SEARCH_INDEX || [], query);
 
   status.textContent = matches.length
     ? `${matches.length} result${matches.length === 1 ? '' : 's'} for “${query}”${matches.length > 80 ? '. Showing the first 80.' : '.'}`
