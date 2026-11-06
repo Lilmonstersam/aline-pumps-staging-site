@@ -838,3 +838,43 @@ h3{font-size:22px}
   .search-page-form>div{flex-direction:column}
   .search-result{padding:21px}
 }
+
+/* ---------- November 2026 client feedback ---------- */
+/* homepage hero image */
+.hero{background:
+   linear-gradient(90deg,rgba(38,55,69,.96) 0%,rgba(38,55,69,.86) 46%,rgba(38,55,69,.5) 100%),
+   url('../img/hero-workshop.jpg') center 40%/cover no-repeat}
+/* homepage services: five cards, row of three then two, CTAs as on Support and Service */
+.home-services .services-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:24px}
+.home-services .service{flex:0 1 calc((100% - 48px)/3);border:1px solid var(--line);padding-bottom:28px;transition:box-shadow .2s,transform .2s}
+.home-services .service:hover{box-shadow:0 22px 44px -25px rgba(29,43,55,.45);transform:translateY(-3px)}
+.home-services .service-media{height:185px;margin-bottom:0}
+.home-services .service h3,.home-services .service p,.home-services .service .service-action{margin-left:24px;margin-right:24px}
+.home-services .service h3{margin-top:27px}
+.home-services .service p{line-height:1.65}
+.home-services .service-action{margin-top:auto;display:flex;align-items:flex-start;flex-direction:column;gap:13px}
+.home-services .service-quicklink{font-size:13px;font-weight:700;color:var(--navy);border-bottom:2px solid var(--orange);line-height:1.4}
+.home-services .service-quicklink:hover{color:var(--orange)}
+.home-services .service .btn{padding:12px 19px}
+.service-media img.logo-img{mix-blend-mode:multiply}
+@media (max-width:900px){.home-services .service{flex-basis:calc((100% - 24px)/2)}}
+@media (max-width:620px){.home-services .service{flex-basis:100%}.home-services .service-media{height:170px}}
+/* products hub: two jump boxes, five-column brand grid */
+.jump.jump-two{grid-template-columns:repeat(2,1fr);max-width:820px}
+.brand-grid{grid-template-columns:repeat(5,1fr)}
+@media (max-width:900px){.brand-grid{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:620px){.jump.jump-two{grid-template-columns:1fr}.jump.jump-two a{height:58px;text-align:center;padding:0 16px}.brand-grid{grid-template-columns:repeat(2,1fr)}}
+/* about: core values list */
+.core-values{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+.core-values li{position:relative;padding-left:22px;font-size:15px;line-height:1.6}
+.core-values li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:9px;background:var(--orange)}
+.core-values strong{color:var(--navy)}
+/* Blue Book request page */
+.bluebook-page{padding:80px 0 100px}
+.bluebook-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:start}
+.bluebook-render{width:100%;max-width:560px;height:auto;margin:0 0 28px}
+.bluebook-copy .lead{font-size:18px;color:var(--navy);margin-bottom:16px}
+.bluebook-help{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);font-size:15px}
+.bluebook-help a{color:var(--orange);font-weight:700}
+.bluebook-form-card{position:sticky;top:24px}
+@media (max-width:900px){.bluebook-grid{grid-template-columns:1fr;gap:40px}.bluebook-form-card{position:static}.bluebook-page{padding:56px 0 72px}}

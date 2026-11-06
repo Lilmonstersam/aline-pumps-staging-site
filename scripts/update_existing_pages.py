@@ -6,8 +6,8 @@ import shutil
 from urllib.parse import urlsplit, parse_qs, quote
 
 SITE = Path(__file__).resolve().parents[1]
-PUMPS2YOU_SOURCE = SITE.parents[2] / "seo/images/logos/Pumps2You-Logo_125x@2x.avif"
-shutil.copy2(PUMPS2YOU_SOURCE, SITE / "assets/logos/pumps2you.avif")
+PUMPS2YOU_SOURCE = SITE.parents[2] / "seo/images/logos/Pumps2You-Logo-Final-600w.png"
+shutil.copy2(PUMPS2YOU_SOURCE, SITE / "assets/logos/pumps2you.png")
 PAGES = ["index.html", "about.html", "products.html", "category-undersink-pumpstations.html", "support-and-service.html", "aline-service.html", "training.html", "kusp40.html"]
 
 
@@ -23,8 +23,8 @@ def replace_link(match):
         target = "blog/index.html"
     elif path == "/products/":
         target = "products.html"
-    elif path == "/login/":
-        target = "2023-blue-book/index.html"
+    elif path in {"/login/", "/blue-book/"}:
+        target = "blue-book/index.html"
     elif path.startswith("/products/") and (SITE / path.lstrip("/") / "index.html").is_file():
         target = path.lstrip("/") + "index.html"
     elif path.startswith("/") and (SITE / path.lstrip("/") / "index.html").is_file():
@@ -46,7 +46,7 @@ def enrich_contact(match):
     if params.get("model"):
         message = f"Quote request for model {params['model'][0]}"
     elif params.get("service"):
-        message = f"Maintenance plan request for {params['service'][0]}"
+        message = f"Servicing request for {params['service'][0]}"
     elif params.get("category"):
         message = f"Product advice request for {params['category'][0].replace('-', ' ')}"
     elif params.get("topic"):
@@ -82,14 +82,12 @@ for filename in PAGES:
     text = text.replace('<ul class="menu">', '<ul class="menu" id="primary-menu">')
     text = text.replace('<button class="menu-toggle" aria-label="Open menu">Menu</button>', '<button class="menu-toggle" type="button" aria-controls="primary-menu" aria-expanded="false" aria-label="Open menu">Menu</button>')
     text = text.replace('<!-- Placeholder wordmark: Pumps 2 You logo file still to be supplied -->', '')
-    text = text.replace('<div class="service-media"><span class="placeholder-tag">Logo to supply</span><span class="wordmark">Pumps <span>2</span> You</span></div>', '<div class="service-media"><img class="logo-img" src="assets/logos/pumps2you.avif" alt="Pumps 2 You" loading="lazy"></div>')
+    text = text.replace('<div class="service-media"><span class="placeholder-tag">Logo to supply</span><span class="wordmark">Pumps <span>2</span> You</span></div>', '<div class="service-media"><img class="logo-img" src="assets/logos/pumps2you.png" alt="Pumps 2 You" loading="lazy"></div>')
     text = text.replace('<span class="external-note">External site</span> <span aria-hidden="true">&rarr;</span>', '<span class="external-arrow" aria-hidden="true">↗</span>')
 
     if filename == "index.html":
         text = text.replace('<a class="btn btn-primary" href="about.html">Learn more</a>\n      <a class="btn btn-outline" href="/contact-us/">Contact us</a>', '<a class="btn btn-primary" href="products.html">Explore pump systems</a>\n      <a class="btn btn-outline" href="aline-service.html">Request service</a>')
         text = re.sub(r'(?m)^\s*<a class="btn btn-outline"[^>]*>Get product advice</a>\n?', '', text)
-        text = text.replace('href="aline-service.html">Learn more</a>', 'href="aline-service.html">Request servicing</a>')
-        text = text.replace('href="training.html">Learn more</a>', 'href="training.html">Book training</a>')
         text = text.replace('href="https://alinespares.com/" target="_blank" rel="noopener">Buy now</a>', 'href="https://alinespares.com/" target="_blank" rel="noopener" aria-label="Shop spares on the external Aline Spares website">Shop spares <span aria-hidden="true">↗</span></a>')
         text = text.replace('href="https://pumps2you.com/" target="_blank" rel="noopener">Buy now</a>', 'href="https://pumps2you.com/" target="_blank" rel="noopener" aria-label="Shop domestic pumps on the external Pumps 2 You website">Shop domestic pumps <span aria-hidden="true">↗</span></a>')
         text = text.replace('href="/contact-us/">Work with us', 'href="/contact-us/?topic=Project%20enquiry">Discuss a project')
@@ -100,14 +98,14 @@ for filename in PAGES:
         text = text.replace('href="/contact-us/">Contact us <span aria-hidden="true">&rarr;</span>', 'href="/contact-us/?topic=Support%20enquiry">Ask for support <span aria-hidden="true">&rarr;</span>')
         text = text.replace('href="our-projects/index.html" style="background-image:url(\'assets/img/project-wellcamp-airport.jpg\')"', 'href="portfolio/wellcamp-airport/index.html" style="background-image:url(\'assets/img/project-wellcamp-airport.jpg\')"')
     if filename == "aline-service.html":
-        text = text.replace('href="/contact-us/">Talk to our Service team', 'href="/contact-us/?topic=Maintenance%20plan&amp;service=Aline%20Service">Request a maintenance plan')
-        text = text.replace('href="/contact-us/">Contact us <span aria-hidden="true">&rarr;</span>', 'href="/contact-us/?topic=Maintenance%20plan&amp;service=Aline%20Service">Request a maintenance plan <span aria-hidden="true">&rarr;</span>')
+        text = text.replace('href="/contact-us/">Talk to our Service team', 'href="/contact-us/?topic=Service%20request&amp;service=Aline%20Service">Request servicing')
+        text = text.replace('href="/contact-us/">Contact us <span aria-hidden="true">&rarr;</span>', 'href="/contact-us/?topic=Service%20request&amp;service=Aline%20Service">Request servicing <span aria-hidden="true">&rarr;</span>')
     if filename == "kusp40.html":
         text = text.replace('href="/contact-us/">Submit an enquiry', 'href="/contact-us/?topic=Product%20quote&amp;model=KUSP40">Request a KUSP40 quote')
         text = text.replace('href="/contact-us/">Contact us <span aria-hidden="true">&rarr;</span>', 'href="/contact-us/?topic=Product%20quote&amp;model=KUSP40">Request a KUSP40 quote <span aria-hidden="true">&rarr;</span>')
     if filename == "category-undersink-pumpstations.html":
         text = text.replace('href="/contact-us/">Make an enquiry', 'href="/contact-us/?topic=Product%20selection&amp;category=undersink-pumpstations">Ask about undersink pump stations')
-        text = text.replace('href="/login/">Log in to access</a>', 'href="/2023-blue-book/">View the Blue Book</a>')
+        text = text.replace('href="/login/">Log in to access</a>', 'href="/blue-book/">Request buyer\'s guide</a>')
         text = text.replace('href="kusp40.html"', 'href="products/undersink-pumpstations/kusp40/index.html"')
         text = text.replace('href="/contact-us/">Work with us', 'href="/contact-us/?topic=Product%20selection&amp;category=undersink-pumpstations">Ask for product advice')
         text = text.replace('<span>Water Storage Tanks</span><span class="count">3</span>', '<span>Water Storage Tanks</span><span class="count">2</span>')

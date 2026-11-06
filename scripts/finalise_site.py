@@ -10,10 +10,9 @@ from lxml import html as lhtml
 
 SITE = Path(__file__).resolve().parents[1]
 EXCLUDE = {"Water Pump System Supplier Sydney _ Aline Pumps Australia.html"}
-EXCLUDE_PATHS = {"products/water-storage-tanks/round/index.html"}
-FACEBOOK = "https://www.facebook.com/alinepumps.pumpingwithinnovation/"
+EXCLUDE_PATHS = {"products/water-storage-tanks/round/index.html", "portfolio/view-all/index.html"}
 LINKEDIN = "https://www.linkedin.com/company/aline-pumps/"
-PORTAL = "https://www.alinepumps.com.au/wp-login.php"
+BUYERS_GUIDE = "blue-book/index.html"
 
 
 def prefix_for(path: Path) -> str:
@@ -30,7 +29,7 @@ def active_section(path: Path) -> str:
         return "projects"
     if relative in {"about.html", "about/index.html"}:
         return "about"
-    other_pages = {"contact-us/index.html", "search/index.html", "terms-and-conditions/index.html", "return-of-goods-policy/index.html", "privacy-policy/index.html", "metal-water-tanks/index.html", "plumbing-supplies/index.html"}
+    other_pages = {"contact-us/index.html", "blue-book/index.html", "search/index.html", "terms-and-conditions/index.html", "return-of-goods-policy/index.html", "privacy-policy/index.html", "metal-water-tanks/index.html", "plumbing-supplies/index.html"}
     if relative.startswith(("blog/", "category/", "topics/")) or (len(path.relative_to(SITE).parts) == 2 and relative not in other_pages):
         return "news"
     return ""
@@ -43,12 +42,12 @@ def search_icon() -> str:
 def header(path: Path) -> str:
     root = prefix_for(path)
     active = active_section(path)
-    links = (("Support and Service", "support", "support-and-service.html"), ("Products", "products", "products.html"), ("Projects", "projects", "our-projects/index.html"), ("News &amp; Insights", "news", "blog/index.html"), ("About", "about", "about.html"))
+    links = (("Products", "products", "products.html"), ("Projects", "projects", "our-projects/index.html"), ("Support and Service", "support", "support-and-service.html"), ("News &amp; Insights", "news", "blog/index.html"), ("About", "about", "about.html"))
     menu_items = []
     for label, key, target in links:
         attrs = ' class="active" aria-current="page"' if key == active else ""
         if key == "support":
-            menu_items.append(f'''<li class="has-submenu"><div class="menu-parent"><a href="{root}{target}"{attrs}>{label}</a><button class="submenu-toggle" type="button" aria-controls="support-submenu" aria-expanded="false" aria-label="Show Support and Service options"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 7 6 6 6-6"/></svg></button></div><ul class="submenu" id="support-submenu"><li><a href="{root}aline-service.html">Request servicing</a></li><li><a href="https://alinespares.com/" target="_blank" rel="noopener">Shop spares <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="https://pumps2you.com/" target="_blank" rel="noopener">Shop domestic pumps <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="{root}training.html#how-to-book">Book training</a></li></ul></li>''')
+            menu_items.append(f'''<li class="has-submenu"><div class="menu-parent"><a href="{root}{target}"{attrs}>{label}</a><button class="submenu-toggle" type="button" aria-controls="support-submenu" aria-expanded="false" aria-label="Show Support and Service options"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 7 6 6 6-6"/></svg></button></div><ul class="submenu" id="support-submenu"><li><a href="{root}aline-service.html">Request servicing</a></li><li><a href="https://alinespares.com/" target="_blank" rel="noopener">Shop spares <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="https://pumps2you.com/" target="_blank" rel="noopener">Shop domestic pumps <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="{root}training.html">Training</a></li></ul></li>''')
         else:
             menu_items.append(f'<li><a href="{root}{target}"{attrs}>{label}</a></li>')
     menu = "".join(menu_items)
@@ -57,14 +56,13 @@ def header(path: Path) -> str:
     <a class="logo" href="{root}index.html" aria-label="Aline Pumps home"><img src="{root}assets/logos/aline-pumps-logo.webp" alt="Aline Pumps" width="134" height="46"></a>
     <div class="topbar-contact"><a class="call" href="tel:1800018999">Call us <strong>1800 018 999</strong></a>
     <div class="social">
-      <a href="{FACEBOOK}" aria-label="Aline Pumps on Facebook" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21z"/></svg></a>
       <a href="{LINKEDIN}" aria-label="Aline Pumps on LinkedIn" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.1c.5-1 1.8-2 3.8-2 4 0 4.8 2.6 4.8 6V21h-4v-5.6c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9V21H9z"/></svg></a>
     </div></div>
   </div></div>
   <nav class="navbar" aria-label="Main"><div class="wrap">
     <ul class="menu" id="primary-menu">{menu}</ul>
     <button class="menu-toggle" type="button" aria-controls="primary-menu" aria-expanded="false" aria-label="Open menu">Menu</button>
-    <div class="nav-actions"><div class="header-search" data-root="{root}" data-index-src="{root}assets/js/search-index.js"><button class="header-search-toggle" type="button" aria-controls="header-search-form" aria-expanded="false" aria-label="Open site search">{search_icon()}</button><form id="header-search-form" role="search" action="{root}search/index.html" method="get"><label class="sr-only" for="header-site-search">Search Aline Pumps</label><input id="header-site-search" type="search" name="q" placeholder="Search the site" autocomplete="off" aria-controls="header-search-preview" aria-expanded="false" required tabindex="-1"><button class="header-search-submit" type="submit" aria-label="Submit search" tabindex="-1">Go</button></form><div class="header-search-preview" id="header-search-preview" aria-label="Search suggestions" hidden><p class="header-search-preview-status" role="status" aria-live="polite"></p><ul class="header-search-preview-list"></ul><a class="header-search-all" href="{root}search/index.html">View all results →</a></div></div><a class="btn btn-outline portal-link" href="{PORTAL}" target="_blank" rel="noopener">Log in <span class="external-arrow" aria-hidden="true">↗</span></a><a class="btn btn-primary" href="{root}contact-us/index.html">Contact us</a></div>
+    <div class="nav-actions"><div class="header-search" data-root="{root}" data-index-src="{root}assets/js/search-index.js"><button class="header-search-toggle" type="button" aria-controls="header-search-form" aria-expanded="false" aria-label="Open site search">{search_icon()}</button><form id="header-search-form" role="search" action="{root}search/index.html" method="get"><label class="sr-only" for="header-site-search">Search Aline Pumps</label><input id="header-site-search" type="search" name="q" placeholder="Search the site" autocomplete="off" aria-controls="header-search-preview" aria-expanded="false" required tabindex="-1"><button class="header-search-submit" type="submit" aria-label="Submit search" tabindex="-1">Go</button></form><div class="header-search-preview" id="header-search-preview" aria-label="Search suggestions" hidden><p class="header-search-preview-status" role="status" aria-live="polite"></p><ul class="header-search-preview-list"></ul><a class="header-search-all" href="{root}search/index.html">View all results →</a></div></div><a class="btn btn-outline portal-link" href="{root}{BUYERS_GUIDE}">Request buyer's guide</a><a class="btn btn-primary" href="{root}contact-us/index.html">Contact us</a></div>
   </div></nav>
 </header>'''
 
@@ -75,9 +73,9 @@ def footer(path: Path) -> str:
   <div class="wrap footer-search-bar"><div><span class="eyebrow">Find what you need</span><h2>Search Aline Pumps</h2></div><form role="search" action="{root}search/index.html" method="get"><label class="sr-only" for="footer-site-search">Search Aline Pumps</label><input id="footer-site-search" type="search" name="q" placeholder="Products, projects, articles…" required><button type="submit" aria-label="Search the site">{search_icon()}<span>Search</span></button></form></div>
   <div class="wrap cols">
     <div><img class="flogo" src="{root}assets/logos/aline-pumps-logo.webp" alt="Aline Pumps"><p>100% Australian owned and operated. Pump and water system design, supply and lifecycle support.</p><div class="badges"><img src="{root}assets/logos/fpa-gold-member.jpg" alt="FPA Australia Gold Member"><img src="{root}assets/logos/iso-9001.png" alt="ISO 9001 certification"></div></div>
-    <div><h4>Explore</h4><ul><li><a href="{root}support-and-service.html">Support and Service</a></li><li><a href="{root}products.html">Products</a></li><li><a href="{root}our-projects/index.html">Projects</a></li><li><a href="{root}blog/index.html">News &amp; Insights</a></li><li><a href="{root}about.html">About</a></li><li><a href="{root}contact-us/index.html">Contact us</a></li></ul></div>
-    <div><h4>Our Services</h4><ul><li><a href="{root}aline-service.html">Aline Service</a></li><li><a href="https://alinespares.com/" target="_blank" rel="noopener">Aline Spares <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="https://pumps2you.com/" target="_blank" rel="noopener">Pumps 2 You <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="{root}training.html">Aline Training</a></li><li><a href="{PORTAL}" target="_blank" rel="noopener">Log in <span class="external-arrow" aria-hidden="true">↗</span></a></li></ul></div>
-    <div><h4>Get in touch</h4><ul class="contact"><li>Phone: <a href="tel:1800018999"><strong>1800 018 999</strong></a></li><li>Email: <a href="mailto:pumps@alinepumps.com">pumps@alinepumps.com</a></li><li><a href="{FACEBOOK}" target="_blank" rel="noopener">Follow us on Facebook</a></li><li><a href="{LINKEDIN}" target="_blank" rel="noopener">Follow us on LinkedIn</a></li></ul></div>
+    <div><h4>Explore</h4><ul><li><a href="{root}products.html">Products</a></li><li><a href="{root}our-projects/index.html">Projects</a></li><li><a href="{root}support-and-service.html">Support and Service</a></li><li><a href="{root}blog/index.html">News &amp; Insights</a></li><li><a href="{root}about.html">About</a></li><li><a href="{root}contact-us/index.html">Contact us</a></li></ul></div>
+    <div><h4>Our Services</h4><ul><li><a href="{root}aline-service.html">Aline Service</a></li><li><a href="https://alinespares.com/" target="_blank" rel="noopener">Aline Spares <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="https://pumps2you.com/" target="_blank" rel="noopener">Pumps 2 You <span class="external-arrow" aria-hidden="true">↗</span></a></li><li><a href="{root}training.html">Aline Training</a></li><li><a href="{root}{BUYERS_GUIDE}">Request buyer's guide</a></li></ul></div>
+    <div><h4>Get in touch</h4><ul class="contact"><li>Phone: <a href="tel:1800018999"><strong>1800 018 999</strong></a></li><li>Email: <a href="mailto:pumps@alinepumps.com">pumps@alinepumps.com</a></li><li><a href="{LINKEDIN}" target="_blank" rel="noopener">Follow us on LinkedIn</a></li></ul></div>
   </div>
   <div class="footer-bottom"><div class="wrap"><span>2026 &copy; Aline Australasia Pty Ltd</span><nav aria-label="Legal"><a href="{root}terms-and-conditions/index.html">Terms and Conditions</a><a href="{root}return-of-goods-policy/index.html">Return of Goods Policy</a><a href="{root}privacy-policy/index.html">Privacy Policy</a></nav></div></div>
 </footer>'''
@@ -123,7 +121,7 @@ def search_records() -> list[dict[str, str]]:
             kind = "Project"
         elif relative.startswith("topics/"):
             kind = "Topic"
-        elif relative.startswith("category/") or (len(path.relative_to(SITE).parts) == 2 and relative not in {"about/index.html", "products/index.html", "support-and-service/index.html", "our-projects/index.html", "blog/index.html", "contact-us/index.html"}):
+        elif relative.startswith("category/") or (len(path.relative_to(SITE).parts) == 2 and relative not in {"about/index.html", "products/index.html", "support-and-service/index.html", "our-projects/index.html", "blog/index.html", "contact-us/index.html", "blue-book/index.html"}):
             kind = "Article"
         else:
             kind = "Page"

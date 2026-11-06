@@ -91,7 +91,8 @@ inventory_title = {urlparse(row["old_url"]).path: row["title"] for row in invent
 category_terms = {row[2]: row for row in terms.values() if any(t[2] == "product_cat" and int(t[1]) == int(row[0]) for t in taxonomy.values()) and row[2] != "uncategorized"}
 category_ids = {row[2]: int(row[0]) for row in category_terms.values()}
 product_posts = sorted((p for p in posts.values() if p[20] == "product" and p[7] == "publish" and p[11] != "round"), key=lambda p: int(p[0]))
-project_posts = sorted((p for p in posts.values() if p[20] == "portfolio" and p[7] == "publish"), key=lambda p: p[5].lower())
+# "View All" was a WordPress portfolio tile pointing back to the archive, so it is not a project.
+project_posts = sorted((p for p in posts.values() if p[20] == "portfolio" and p[7] == "publish" and p[11] != "view-all"), key=lambda p: p[5].lower())
 article_posts = sorted((p for p in posts.values() if p[20] == "post" and p[7] == "publish"), key=lambda p: p[2], reverse=True)
 article_slugs = {p[11] for p in article_posts}
 if article_slugs != ARTICLE_TAGS.keys():
@@ -115,6 +116,8 @@ known_paths = {
     "/training/": "training.html", "/services/": "support-and-service.html",
     "/our-projects/": "our-projects/index.html", "/blog/": "blog/index.html",
     "/contact-us/": "contact-us/index.html", "/meet-the-team/": "about.html",
+    "/blue-book/": "blue-book/index.html", "/blue-book-form-page/": "blue-book/index.html",
+    "/portfolio/view-all/": "our-projects/index.html",
 }
 for slug, path in category_path.items():
     known_paths[f"/products/{slug}/"] = path
@@ -502,7 +505,7 @@ def build_category(slug, term):
     banner_style = f' style="background-image:linear-gradient(rgba(38,55,69,.86),rgba(38,55,69,.86)),url(\'{e(media_url(banner_img,current))}\')"' if banner_img else ""
     hero = f'''<section class="page-banner cat-banner"{banner_style}><div class="wrap"><span class="brand-kicker">Aline Pumps</span><h1>{e(display)}</h1><p class="crumbs"><a href="{e(local_link('/',current))}">Home</a> &nbsp;/&nbsp; <a href="{e(local_link('/products/',current))}">Products</a> &nbsp;/&nbsp; {e(display)}</p></div></section>'''
     intro = f'''<section class="section cat-intro" id="overview"><div class="wrap"><div><span class="eyebrow">Overview</span><h2>{e(display)}</h2><div class="archive-rich">{intro_lead}</div>{f'<details><summary>Read more</summary><div class="archive-rich">{intro_more}</div></details>' if intro_more else ''}<a class="btn btn-primary" href="{e(contact)}">Ask for product advice <span aria-hidden="true">&rarr;</span></a></div>{image}</div></section>'''
-    products = f'''<section class="section range" id="range"><div class="wrap"><aside class="range-nav" aria-label="Product categories"><h3>Our Range</h3><ul>{side}</ul><div class="bluebook"><h4>Aline Blue Book</h4><p>Specifications, drawings and selection data for the Aline range.</p><a class="btn btn-primary" href="{e(local_link('/2023-blue-book/',current))}">View the Blue Book</a></div></aside><div><div class="range-head"><div><span class="eyebrow">Our range</span><h2>{e(display)}</h2></div><p>{len(members)} products</p></div><div class="products-grid">{cards}</div></div></div></section>'''
+    products = f'''<section class="section range" id="range"><div class="wrap"><aside class="range-nav" aria-label="Product categories"><h3>Our Range</h3><ul>{side}</ul><div class="bluebook"><h4>Aline Blue Book</h4><p>Specifications, drawings and selection data for the Aline range.</p><a class="btn btn-primary" href="{e(local_link('/blue-book/',current))}">Request buyer's guide</a></div></aside><div><div class="range-head"><div><span class="eyebrow">Our range</span><h2>{e(display)}</h2></div><p>{len(members)} products</p></div><div class="products-grid">{cards}</div></div></div></section>'''
     ticks = ''.join(f'<div class="app"><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6L20.1 8.4 18.7 7z"/></svg></span>{e(item)}</div>' for item in app_items)
     applications = f'''<section class="section apps" id="applications"><div class="wrap"><div><span class="eyebrow">Where they are used</span><h2>Common Applications</h2><div class="archive-rich">{app_desc}</div></div><div class="app-grid">{ticks}</div></div></section>'''
     projects = related_records([p for p in project_posts if featured(p)], slug, 2)
@@ -638,7 +641,7 @@ def build_story(post, kind):
     more = [p for p in collection if p[0] != post[0]][:3]
     dest = (lambda p: "/portfolio/"+p[11]+"/") if project else (lambda p: "/"+p[11]+"/")
     cards = "".join(card(current, dest(p), featured(p), title(p), excerpt(p,120), "View project" if project else "Read article", "" if project else article_topics(current, p)) for p in more)
-    bluebook = '''<section class="section archive-bluebook"><div class="wrap archive-reading"><span class="eyebrow">Aline Blue Book</span><h2>Request access to the product guide</h2><p>The guide download is available through Aline Pumps' access form.</p><a class="btn btn-primary" href="https://info.alinepumps.com.au/blue-book-form-page" target="_blank" rel="noopener">Open the Blue Book access form <span aria-hidden="true">↗</span></a></div></section>''' if post[11] == "2023-blue-book" else ""
+    bluebook = '''<section class="section archive-bluebook"><div class="wrap archive-reading"><span class="eyebrow">Aline Blue Book</span><h2>Request access to the product guide</h2><p>The guide download is available through Aline Pumps' access form.</p><a class="btn btn-primary" href="../blue-book/index.html">Request buyer's guide</a></div></section>''' if post[11] == "2023-blue-book" else ""
     story_meta = e(category[0].replace("-", " ").title()) if project and category else e(kicker) + " · " + date
     story_tags = "" if project else article_topics(current, post)
     body = hero + f'''<article class="section archive-story{' article-story' if not project else ''}"><div class="wrap archive-reading"><p class="archive-story-meta">{story_meta}</p>{story_tags}{f'<figure class="archive-story-image">{visual}</figure>' if visual else ''}<div class="archive-rich">{content}</div><a class="link-arrow" href="{e(local_link(parent,current))}">Back to {"projects" if project else "news and insights"}</a></div></article>''' + bluebook + f'''<section class="section archive-related"><div class="wrap"><div class="section-head"><div><span class="eyebrow">Keep exploring</span><h2>{"More projects" if project else "More articles"}</h2></div></div><div class="archive-grid">{cards}</div></div></section>''' + cta(current, "Project enquiry" if project else "Technical advice", "Talk to our team")
@@ -715,6 +718,20 @@ def build_contact():
     write(current, document(current, "Contact Aline Pumps | Product, Project and Service Enquiries", "Contact Aline Pumps for product selection, project requirements, servicing and technical support.", "contact", body, "/contact-us/", script))
 
 
+def build_blue_book():
+    current = "blue-book/index.html"
+    heading = "Aline Blue Book – A comprehensive product guide"
+    body = f'''<section class="page-banner archive-banner bluebook-banner"><div class="wrap"><span class="eyebrow">Request buyer's guide</span><h1>{e(heading)}</h1><p class="crumbs"><a href="../index.html">Home</a> &nbsp;/&nbsp; <a href="../products.html">Products</a> &nbsp;/&nbsp; Aline Blue Book</p></div></section><section class="section bluebook-page"><div class="wrap bluebook-grid"><div class="bluebook-copy"><img class="bluebook-render" src="../assets/img/blue-book-render.png" alt="Aline Blue Book product guide" width="760" height="427"><p class="lead">A one-of-a-kind resource from Aline that not only highlights the best of our product range, but also provides insight and education on best practice and the way our products and systems work.</p><p>Our comprehensive product guide is updated regularly to ensure our valued customers have the most up-to-date information on our range.</p><p class="bluebook-help">Got questions? Call our friendly customer service team on <a href="tel:1800018999">1800 018 999</a>.</p></div><div class="contact-form-card bluebook-form-card"><h2>Get your copy</h2><p id="bluebook-form-instructions">Submit the form to gain access to this valuable resource.</p><div id="bluebook-form" aria-label="Aline Blue Book request form"></div><p class="form-fallback">If the form does not load, <a href="https://info.alinepumps.com.au/blue-book-form-page" target="_blank" rel="noopener">use the current Blue Book form</a> or call <a href="tel:1800018999">1800 018 999</a>.</p></div></div></section>'''
+    script = '''<script src="https://js.hsforms.net/forms/embed/v2.js"></script><script>if(window.hbspt&&window.hbspt.forms){window.hbspt.forms.create({region:'ap1',portalId:'23542928',formId:'9ad486f4-0bb5-4374-909e-5d001d753944',target:'#bluebook-form'});}</script>'''
+    write(current, document(current, "Aline Blue Book | Request the Aline Pumps Buyer's Guide", "Request the Aline Blue Book, a comprehensive product guide covering Aline pumps, pump stations, tanks and packaged systems.", "products", body, "/blue-book/", script))
+
+
+def build_view_all_redirect():
+    # The legacy "View All" portfolio entry is retired; send any old link to the projects archive.
+    target = "../../our-projects/index.html"
+    write("portfolio/view-all/index.html", f'''<!DOCTYPE html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, follow"><link rel="canonical" href="{ORIGIN}/our-projects/"><meta http-equiv="refresh" content="0;url={target}"><title>Our Projects | Aline Pumps</title></head><body><p>This page has moved to <a href="{target}">Our Projects</a>.</p></body></html>''')
+
+
 def build_extra_page(post):
     current = f"{post[11]}/index.html"
     body = banner(current, title(post), "Aline Pumps", "/") + f'''<article class="section archive-story"><div class="wrap archive-reading"><div class="archive-rich">{clean_markup(post[4], current)}</div></div></article>'''
@@ -747,6 +764,8 @@ for page in range(2, 6):
 build_authors()
 build_project_categories()
 build_contact()
+build_blue_book()
+build_view_all_redirect()
 for post in extra_pages.values():
     build_extra_page(post)
 print(f"Built {len(category_terms)} product categories, {len(product_posts)} products, {len(project_posts)} projects, {len(article_posts)} articles, {len(blog_category_slugs)} article categories and {len(extra_pages)} extra pages; copied {len(copied_media)} media files.")
