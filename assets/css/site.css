@@ -606,7 +606,7 @@ h3{font-size:22px}
 .range-nav .bluebook{margin-top:28px;background:var(--navy);padding:26px 24px}
 .range-nav .bluebook h4{color:#fff;font-size:18px;margin-bottom:8px}
 .range-nav .bluebook p{color:rgba(255,255,255,.82);font-size:14px;margin-bottom:18px}
-.range-nav .bluebook .btn{width:100%;justify-content:center;padding:13px 14px}
+.range-nav .bluebook .btn{width:100%;justify-content:center;padding:13px 12px;white-space:normal;text-align:center;line-height:1.35;letter-spacing:.04em}
 .products-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
 .product-card{background:var(--white);display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}
 .product-card:hover{box-shadow:0 18px 40px -22px rgba(29,43,55,.45);transform:translateY(-3px)}
